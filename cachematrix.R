@@ -3,10 +3,13 @@
 
 #' factory for inverse object, based on mean example
 #' @param x - a matrix whose inverse is to be calculated
-#' @return list object with set/get for both x and its inverse
+#' @return list with set/get functions for both x and its inverse
 
 makeCacheMatrix <- function(x = matrix()) {
+  ## private variables (NB - include x too)
   inv <- NULL
+  
+  ## setters/getters (NB - set also clears inv as there is presumably a new matrix)
   set <- function(y) {
     x <<- y
     inv <<- NULL
@@ -14,27 +17,41 @@ makeCacheMatrix <- function(x = matrix()) {
   get <- function() x
   setinverse <- function(inverse) inv <<- inverse
   getinverse <- function() inv
+  
+  ## finally wrap all functions in a list and return it
   list(set = set, get = get,
        setinverse = setinverse,
        getinverse = getinverse)
-  
+
 }
 
 
 #' returns cached version or calculates value if not cached, then caches it
+#' @param x - a matrix whose inverse is to be calculated
+#' @param ... any remaining optional parameters (passed to solve)
+#' @return inv - a matrix that is the inverse of 'x'
 
 cacheSolve <- function(x, ...) {
-    ## Return a matrix that is the inverse of 'x'
+    ## first try to get a cached inverse
     inv <- x$getinverse()
+    
+    ## if this succeeds, return it and print message before returning from function
     if(!is.null(inv)) {
       message("getting cached data")
       return(inv)
     }
-    data <- x$get()
-    inv <- solve(data, ...)
-    x$setinverse(inv)
-    inv
     
+    ## if you get this far, there's no cached version, so get the matrix via getter call
+    data <- x$get()
+    
+    ## do the hard work here
+    inv <- solve(data, ...)
+    
+    ## then store result for future use
+    x$setinverse(inv)
+    
+    ## and finally return the actual value calculated
+    inv
 }
 
 ## test cases
